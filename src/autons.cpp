@@ -1,7 +1,9 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "robodash/api.h"
 
 
-void right_side(){
-    
+
+extern void right_side_auton(){
+
 }

@@ -1,14 +1,20 @@
 
 #include "main.h"
-#include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/api.hpp"
+
+
 
 rd::Selector selector({
-    {"Right side", right_side()},
+    {"Right side",right_side_auton()},
 });
 rd::Console console;
 
 // controller
-pros::Controller controller(pros::E_CONTROLLER_MASTER);
+pros::MotorGroup lift({12,13});
+pros::MotorGroup intake({1,2},
+                            pros::MotorGearset::green);
+        
+pros::Controller master(pros::E_CONTROLLER_MASTER);
 
 // motor groups
 pros::MotorGroup leftMotors({-5, 4, -3},
@@ -16,7 +22,7 @@ pros::MotorGroup leftMotors({-5, 4, -3},
 pros::MotorGroup rightMotors({6, -9, 7}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 
 // Inertial Sensor on port 10
-pros::Imu inertial_mu(10);
+pros::Imu imu(10);
 
 // tracking wheels
 // horizontal tracking wheel encoder. Rotation sensor, port 20, not reversed
@@ -137,8 +143,9 @@ ASSET(example_txt); // '.' replaced with "_" to make c++ happy
  * This is an example autonomous routine which demonstrates a lot of the features LemLib has to offer
  */
 void autonomous() {
-    console.printf("The robot heading is %f\n", inertial_mu.get_heading());
+    console.printf("The robot heading is %f\n", imu.get_heading());
     selector.run_auton();
+    
 }
 
 /**
@@ -148,11 +155,23 @@ void opcontrol() {
     // controller
     // loop to continuously update motors
     while (true) {
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+            intake.move(-127); 
+        }
+        else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+            intake.move(127);
+        }
+        else{
+            intake.move(0);
+        }
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            intake.move(0);
+        }
         // get joystick positions
-        int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+        int LEFTy = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+        int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
         // move the chassis with curvature drive
-        chassis.arcade(leftY, rightX);
+        chassis.arcade(LEFTy, rightX);
         // delay to save resources
         pros::delay(10);
     }
